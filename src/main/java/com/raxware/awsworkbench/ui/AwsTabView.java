@@ -17,6 +17,7 @@
 package com.raxware.awsworkbench.ui;
 
 import javafx.scene.Node;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 
 /**
@@ -28,6 +29,8 @@ import javafx.scene.control.Tab;
 public abstract class AwsTabView extends Tab {
 
     protected AwsWorkbenchShell awsWorkbenchShell;
+    private MenuItem menuItem;
+    private String menuPath;
 
     public AwsWorkbenchShell getShell() {
         return awsWorkbenchShell;
@@ -68,4 +71,31 @@ public abstract class AwsTabView extends Tab {
      * @return The root node for the UI
      */
     protected abstract Node getTabContent();
+
+    /**
+     * Sets the menu item for this tab in the main UI.
+     *
+     * @param menuItem The menu item created in the 'Window' menu in the main menu bar
+     * @param menuPath The effective menu path in the main menu bar
+     */
+    public final void setMenuItem(MenuItem menuItem, String menuPath) {
+        this.menuItem = menuItem;
+        this.menuPath = menuPath;
+    }
+
+    /**
+     * Accesor method for the menu item
+     *
+     * @return The menu item supplied on creation
+     */
+    public final MenuItem getMenuItem() {return menuItem;}
+
+    /**
+     * Accessor method for the path of the menu item
+     *
+     * @return A string for the menu path in the main menu bar
+     */
+    public String getMenuPath() {
+        return menuPath;
+    }
 }

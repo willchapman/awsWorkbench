@@ -4,6 +4,7 @@ import com.raxware.awsworkbench.AwsProxy;
 import com.raxware.awsworkbench.ui.dialogs.Dialogs;
 import com.raxware.awsworkbench.ui.dialogs.ErrorDialog;
 import com.raxware.awsworkbench.ui.menu.MenuBarRegistry;
+import com.raxware.awsworkbench.ui.menu.TabSwitchEventHandler;
 import com.raxware.awsworkbench.ui.tabs.s3.S3ExplorerTab;
 import javafx.application.Platform;
 import javafx.event.Event;
@@ -92,7 +93,16 @@ public class AwsWorkbenchShell extends BorderPane  {
                                             .filter(tab -> tab.getClass().isAssignableFrom(cls))
                                             .findFirst().orElse(null);
         if(tabView != null) {
+            try {
+                log.info(String.format("Removing MenuItem: ", tabView.getMenuPath()));
+                MenuBarRegistry.getInstance().removeMenuItem(tabView.getMenuPath());
+            }catch(Exception e) {
+                log.error("Failed to remove menu entry", e);
+            }
+
             ret = tabPane.getTabs().remove(tabView);
+        } else {
+            log.warn(String.format("Unable to find tab: %s", tabText));
         }
         return ret;
     }
@@ -100,12 +110,12 @@ public class AwsWorkbenchShell extends BorderPane  {
     /**
      * Creates a new instance, sets up the tab and adds it to the UI.  Then returns a reference to this tab.
      *
-     * If anything goes wrong, we will throw a TabException
+     * If anything goes wrong, an error is shown and null is returned.
      *
      * @param cls The class type to instantiate
      * @param tabText What text to put into the tab
-     * @param autoSelect trrue to automatically select the tab after being added, false to just add and not select.
-     * @return A refernece to the tab added to the UI
+     * @param autoSelect true to automatically select the tab after being added, false to just add and not select.
+     * @return A reference to the tab added to the UI or null
      */
     public AwsTabView addTab(Class<? extends AwsTabView> cls, String tabText, boolean autoSelect) {
         Objects.requireNonNull(cls, "Cannot add null tab");
@@ -120,13 +130,17 @@ public class AwsWorkbenchShell extends BorderPane  {
             tab.added();
 
             MenuItem menuItem = getMenuItem("Window/"+tabText);
-            menuItem.setOnAction(event -> System.out.println(event.toString()));
+            menuItem.setOnAction(new TabSwitchEventHandler(this, tab));
+            tab.setMenuItem(menuItem, "Window/"+tabText);
 
             if(autoSelect)
-                tabPane.getSelectionModel().select(tab);
+                setActiveTab(tab);
 
             tab.setOnCloseRequest(event -> {
-                tabClosingEvent(event);
+                if(tabClosingEvent(event)) {
+                    AwsTabView tabView = (AwsTabView) event.getSource();
+                    removeTab(tabView.getClass(), tabView.getText());
+                }
             });
 
             log.trace(String.format("Tab Added -> %s :: %s", tabText, cls.toString()));
@@ -143,7 +157,9 @@ public class AwsWorkbenchShell extends BorderPane  {
     }
 
     /**
-     * If we have nothing to show, present something to the user instead of an empty window.
+     * If we have nothing to show, present something to the user instead of an empty window.  This should only really
+     * take effect if an error occurs during initialization.  If all the tabs are closed normally, the default operation
+     * is too close the application.
      */
     private void checkForEmptyPane() {
         if(tabPane.getTabs().size() == 0) {
@@ -166,9 +182,10 @@ public class AwsWorkbenchShell extends BorderPane  {
      * This also calls the closing() method on the Tab itself.  See {@see AwsTabView}.
      * @param evt The event passed in from JavaFX
      */
-    private void tabClosingEvent(Event evt) {
+    private boolean tabClosingEvent(Event evt) {
         AwsTabView tab = (AwsTabView) evt.getSource();
         int size = tabPane.getTabs().size();
+        boolean result = false;
         if(size == 1 && Dialogs.confirm("This will exit the application.  Are you sure?") == ButtonType.NO) {
             log.trace("CLose request came in, user declined closing the application");
             evt.consume();
@@ -179,8 +196,9 @@ public class AwsWorkbenchShell extends BorderPane  {
         } else {
             log.trace(String.format("Closing %s %s", tab.getText(), tab.getClass().toString()));
             tab.closing();
+            result = true;
         }
-
+        return result;
     }
 
     /**
@@ -227,4 +245,14 @@ public class AwsWorkbenchShell extends BorderPane  {
         return application;
     }
 
+    /**
+     * Will select the tab supplied.  Must be a reference to the actual tab, and not null.  Nothing happens if null
+     * is passed to this method.
+     *
+     * @param awsTabView The tab to select
+     */
+    public void setActiveTab(AwsTabView awsTabView) {
+        if(awsTabView != null)
+            tabPane.getSelectionModel().select(awsTabView);
+    }
 }

@@ -1,4 +1,4 @@
-package com.raxware.awsworkbench.res.icons;
+package com.raxware.awsworkbench.res;
 
 import javafx.scene.image.Image;
 

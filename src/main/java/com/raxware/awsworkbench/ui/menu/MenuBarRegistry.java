@@ -5,6 +5,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Provides a central repository for the menubar.  This will allow individual tabs or even viewlets to add their own entries
@@ -61,8 +62,63 @@ public class MenuBarRegistry {
         }
 
         return menuItem;
-
     }
+
+    /**
+     * Looks for and removes the menu entry path supplied.
+     *
+     * @param path Same path string used to create the menu item
+     * @return true if the MenuItem was found and removed.  false otherwise.
+     * @throws IllegalStateException If we are unable to find the top-level MenuItem in the main MenuBar
+     * @throws IllegalArgumentException If the MenuItem is not found in the path supplied
+     * @throws NullPointerException If the supplied path is null
+     */
+    public boolean removeMenuItem(String path) {
+        if(path == null)
+            throw new NullPointerException("Cannot remove null menu path");
+
+        //
+        // get our array setup for the path parsing
+        String[] paths = parsePath(path);
+        //
+        // first, find the first entry of the path in the menu bar
+        MenuItem parent = getMenuBar().getMenus()
+                            .stream()
+                            .filter(menu -> menu.getText().equals(paths[0]))
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalStateException(String.format("Unable to find entry %s", paths[0])));
+        MenuItem curr = null;
+        for (int i = 1; i < paths.length; i++) {
+            curr = get(parent, paths[i]);
+            if(curr == null)
+                throw new IllegalStateException(String.format("Unable to find %s, parent: %s", paths[i], parent.getText()));
+            parent = curr;
+        }
+
+        return parent.getParentMenu().getItems().remove(curr);
+    }
+
+    /**
+     * Takes a path string and attempts to break it up into an array
+     *
+     * @param path The menu path
+     * @return An array of the menu path broken up
+     * @throws IllegalArgumentException If the path cannot be split or a split returns a zero-length array
+     * @throws NullPointerException If the supplied path is null
+     */
+    private String[] parsePath(String path) throws IllegalArgumentException {
+        Objects.requireNonNull(path, "cannot parse a null path");
+        String[] paths = null;
+        if(path.indexOf(separator) > 0) {
+            paths = path.split(separator);
+            if(paths == null || paths.length == 0)
+                throw new IllegalArgumentException(String.format("Unable to determine path: %s", path));
+        } else {
+            paths = new String[] { path };
+        }
+        return paths;
+    }
+
 
     /**
      * Takes the path, which was split in the public method and performs the real work here.
