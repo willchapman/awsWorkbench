@@ -10,7 +10,6 @@ import com.raxware.awsworkbench.ui.AwsTabView;
 import com.raxware.awsworkbench.ui.dialogs.ErrorDialog;
 import com.raxware.awsworkbench.ui.viewlets.AwsViewlet;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
@@ -43,7 +42,7 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
     private StringProperty currentPrefix = new SimpleStringProperty("");
 
     /// The list of keys we are showing on the UI
-    private final ObservableList<S3KeyEntry> keyList = FXCollections.observableArrayList();;
+    private final ObservableList<S3KeyEntry> keyList = FXCollections.observableArrayList();
 
     public S3BucketBrowserViewlet(AwsTabView awsTabView) {
         super(awsTabView);

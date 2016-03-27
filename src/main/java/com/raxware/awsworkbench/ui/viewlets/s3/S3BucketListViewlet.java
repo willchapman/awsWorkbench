@@ -1,12 +1,10 @@
 package com.raxware.awsworkbench.ui.viewlets.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListBucketsRequest;
 import com.raxware.awsworkbench.model.s3.S3BucketListCell;
 import com.raxware.awsworkbench.model.s3.S3BucketListEntry;
 import com.raxware.awsworkbench.ui.AwsTabView;
-import com.raxware.awsworkbench.ui.tabs.s3.S3ExplorerTab;
 import com.raxware.awsworkbench.ui.viewlets.AwsViewlet;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
@@ -15,7 +13,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.text.Text;
 
 import java.util.stream.Collectors;
 

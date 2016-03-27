@@ -6,7 +6,6 @@ import javafx.scene.control.TableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
 /**
@@ -96,7 +95,7 @@ public class S3KeyTableCell extends TableCell<S3KeyEntry,S3KeyEntry> {
         return Resources.getPngIcon("file", "24");
     }
 
-    public static enum Fields {
+    public enum Fields {
         NAME, LAST_MODIFIED, SIZE
-    };
+    }
 }

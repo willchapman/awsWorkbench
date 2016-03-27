@@ -10,7 +10,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.text.Text;
 
 import java.util.Objects;
 
@@ -43,7 +42,7 @@ public class S3ExplorerTab extends S3TabView  implements S3Downloader {
 
         BorderPane topTemp = new BorderPane();
         topTemp.setLeft(activeBucketLabel);
-        topTemp.setMargin(activeBucketLabel, new Insets(3.0, 6.0, 3.0, 3.0));
+        BorderPane.setMargin(activeBucketLabel, new Insets(3.0, 6.0, 3.0, 3.0));
         topTemp.setCenter(pathBar);
         explorerPane.setTop(topTemp);
 

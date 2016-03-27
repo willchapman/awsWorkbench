@@ -5,30 +5,23 @@ import com.amazonaws.event.ProgressEventType;
 import com.amazonaws.event.ProgressListener;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.transfer.Download;
-import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
-import com.amazonaws.services.s3.transfer.Upload;
-import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
-import com.raxware.awsworkbench.model.menu.ReadOnlyMenuItem;
 import com.raxware.awsworkbench.model.menu.SimpleMenuItem;
 import com.raxware.awsworkbench.ui.AwsTabView;
-import com.raxware.awsworkbench.ui.dialogs.ErrorDialog;
 import com.raxware.awsworkbench.ui.tabs.s3.S3DownloadTab;
 import com.raxware.awsworkbench.ui.viewlets.AwsViewlet;
-import javafx.beans.property.*;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
-import javafx.event.EventType;
 import javafx.geometry.Insets;
-import javafx.geometry.Side;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Paint;
 import javafx.stage.DirectoryChooser;
-import sun.java2d.pipe.SpanShapeRenderer;
 
 import java.awt.*;
 import java.io.File;
@@ -333,7 +326,7 @@ public class S3DownloadItemViewlet extends AwsViewlet implements ProgressListene
             //
             // in the future, we can handle this more gracefully, but for now we are just
             // going to throw an error
-            if(!desktop.isDesktopSupported()) {
+            if(!Desktop.isDesktopSupported()) {
                 throw new UnsupportedOperationException("Desktop API is not supported");
             }
 

@@ -1,7 +1,6 @@
 package com.raxware.awsworkbench.ui.tabs.s3;
 
 import com.raxware.awsworkbench.model.s3.S3KeyEntry;
-import com.raxware.awsworkbench.ui.AwsTabView;
 import com.raxware.awsworkbench.ui.viewlets.s3.S3DownloadItemViewlet;
 import javafx.application.Platform;
 import javafx.scene.Node;

@@ -3,8 +3,6 @@ package com.raxware.awsworkbench.ui.dialogs;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
-import java.util.Optional;
-
 /**
  * Convience methods for getting feedback from the user
  *
