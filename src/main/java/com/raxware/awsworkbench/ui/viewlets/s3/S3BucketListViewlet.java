@@ -48,11 +48,11 @@ public class S3BucketListViewlet extends AwsViewlet implements ListChangeListene
     public void syncBuckets() {
         buckets.clear();
 
-        AmazonS3 s3CLient = s3();
+        AmazonS3 s3Client = s3();
         ListBucketsRequest listBucketRequest = new ListBucketsRequest();
 
         buckets.addAll(
-                s3CLient.listBuckets(listBucketRequest)
+                s3Client.listBuckets(listBucketRequest)
                         .stream().map(S3BucketListEntry::new).collect(Collectors.toList())
         );
 

@@ -44,7 +44,7 @@ public final class Resources {
         String key = String.format("%s_%s.%s", name, size, extension);
         Image img = null;
         if(!cache.containsKey(key)) {
-            img = new Image(String.format("com/raxware/awsworkbench/res/icons/%s", key));
+            img = new Image(String.format("icons/%s", key));
             cache.put(key, img);
         } else {
             img = cache.get(key);

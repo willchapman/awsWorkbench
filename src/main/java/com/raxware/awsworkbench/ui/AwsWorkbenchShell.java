@@ -1,17 +1,16 @@
 package com.raxware.awsworkbench.ui;
 
 import com.raxware.awsworkbench.AwsProxy;
-import com.raxware.awsworkbench.exceptions.TabException;
 import com.raxware.awsworkbench.ui.dialogs.Dialogs;
+import com.raxware.awsworkbench.ui.dialogs.ErrorDialog;
 import com.raxware.awsworkbench.ui.menu.MenuBarRegistry;
 import com.raxware.awsworkbench.ui.tabs.s3.S3ExplorerTab;
 import javafx.application.Platform;
 import javafx.event.Event;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Paint;
+import javafx.scene.text.Font;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -67,13 +66,35 @@ public class AwsWorkbenchShell extends BorderPane  {
     }
 
     /**
-     * Adds a tab, but does not auto select it.  Convienence for <code>addTab(cls, tabText, false)</code>.
+     * Adds a tab, but does not auto select it.  Convenience for <code>addTab(cls, tabText, false)</code>.
      * @param cls The class to instantiate
      * @param tabText What text to put into the tab
      * @return The instance of the tab that was added to the UI
      */
     public AwsTabView addTab(Class<? extends AwsTabView> cls, String tabText) {
         return addTab(cls, tabText, false );
+    }
+
+    /**
+     * Removes a tab from the main pane.  THe tab must match both for the class and tab text.  The class type is
+     * required, the tab text is optional.  If the tab text is null, then it is not considered.
+     *
+     * Note that only a single tab will ever be removed from calling this method.
+     *
+     * @param cls The class type for the tab we are looking for
+     * @param tabText The tab text to use when searching (optional).  null to not use.
+     * @return true if a tab is removed, false if it is not.
+     */
+    public boolean removeTab(Class<? extends AwsTabView> cls, String tabText) {
+        boolean ret = false;
+        AwsTabView tabView = (AwsTabView) tabPane.getTabs()
+                                            .stream()
+                                            .filter(tab -> tab.getClass().isAssignableFrom(cls))
+                                            .findFirst().orElse(null);
+        if(tabView != null) {
+            ret = tabPane.getTabs().remove(tabView);
+        }
+        return ret;
     }
 
     /**
@@ -88,15 +109,15 @@ public class AwsWorkbenchShell extends BorderPane  {
      */
     public AwsTabView addTab(Class<? extends AwsTabView> cls, String tabText, boolean autoSelect) {
         Objects.requireNonNull(cls, "Cannot add null tab");
-
+        AwsTabView tab = null;
         try {
-            AwsTabView tab = cls.newInstance();
+            tab = cls.newInstance();
             tab.setText(tabText);
             tab.awsWorkbenchShell = this;
             tab.init();
             tab.start();
             tabPane.getTabs().add(tab);
-            Platform.runLater(() -> tab.added());
+            tab.added();
 
             MenuItem menuItem = getMenuItem("Window/"+tabText);
             menuItem.setOnAction(event -> System.out.println(event.toString()));
@@ -111,7 +132,30 @@ public class AwsWorkbenchShell extends BorderPane  {
             log.trace(String.format("Tab Added -> %s :: %s", tabText, cls.toString()));
             return tab;
         } catch (Exception e) {
-            throw new TabException("Unable to add tab", e);
+            if(tab != null) {
+                tabPane.getTabs().remove(tab);
+            }
+            checkForEmptyPane();
+            ErrorDialog.show("Error adding "+tabText + " tab: "+e.getMessage(), e);
+
+            return null;
+        }
+    }
+
+    /**
+     * If we have nothing to show, present something to the user instead of an empty window.
+     */
+    private void checkForEmptyPane() {
+        if(tabPane.getTabs().size() == 0) {
+            // This will be improved upon later
+            Label errLabel = new Label("No tabs have been added");
+            errLabel.setFont(Font.font("Arial", 32.0));
+            errLabel.setTextFill(Paint.valueOf("#BBBBBB"));
+            errLabel.setMaxHeight(Double.MAX_VALUE);
+            errLabel.setMinHeight(Double.MIN_VALUE);
+            setCenter(errLabel);
+        } else {
+            setCenter(tabPane);
         }
     }
 
