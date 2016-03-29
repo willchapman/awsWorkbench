@@ -33,7 +33,7 @@ public class S3KeyTableCell extends TableCell<S3KeyEntry,S3KeyEntry> {
 
     private static S3KeyTableCell build(Fields type) {
         S3KeyTableCell cell = new S3KeyTableCell();
-        cell.setFont(Font.font("Arial", 18.0));
+        cell.setFont(Font.font("Arial", 14.0));
         cell.field = type;
         return cell;
     }
@@ -88,11 +88,11 @@ public class S3KeyTableCell extends TableCell<S3KeyEntry,S3KeyEntry> {
     }
 
     private Image getDirectoryIcon() {
-        return Resources.getPngIcon("folder", "24");
+        return Resources.getPngIcon("folder", "20");
     }
 
     private Image getFileIcon() {
-        return Resources.getPngIcon("file", "24");
+        return Resources.getPngIcon("file", "20");
     }
 
     public enum Fields {

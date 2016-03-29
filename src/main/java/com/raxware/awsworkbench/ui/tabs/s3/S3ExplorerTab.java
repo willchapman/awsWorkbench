@@ -1,16 +1,16 @@
 package com.raxware.awsworkbench.ui.tabs.s3;
 
 import com.raxware.awsworkbench.model.s3.S3KeyEntry;
-import com.raxware.awsworkbench.ui.viewlets.s3.S3BucketBrowserViewlet;
-import com.raxware.awsworkbench.ui.viewlets.s3.S3BucketListViewlet;
-import com.raxware.awsworkbench.ui.viewlets.s3.S3Downloader;
+import com.raxware.awsworkbench.ui.viewlets.s3.*;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import jdk.nashorn.internal.objects.NativeJava;
 
+import java.io.File;
 import java.util.Objects;
 
 /**
@@ -18,7 +18,7 @@ import java.util.Objects;
  *
  * Created by will on 3/20/2016.
  */
-public class S3ExplorerTab extends S3TabView  implements S3Downloader {
+public class S3ExplorerTab extends S3TabView implements S3Downloader, S3Uploader {
 
     /// The general layout pane
     private BorderPane explorerPane = new BorderPane();
@@ -56,6 +56,8 @@ public class S3ExplorerTab extends S3TabView  implements S3Downloader {
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
         scrollPane.setContent(explorerPane);
+
+
     }
 
     /**
@@ -66,12 +68,21 @@ public class S3ExplorerTab extends S3TabView  implements S3Downloader {
     public void downloadItem(S3KeyEntry s3KeyEntry) {
         Objects.requireNonNull(s3KeyEntry, "Unable to download null object");
 
-        S3DownloadTab s3DownloadTab = (S3DownloadTab) getShell().getTab(S3DownloadTab.class);
-        if(s3DownloadTab == null) {
-            s3DownloadTab = (S3DownloadTab) getShell().addTab(S3DownloadTab.class, S3DownloadTab.TAB_TEXT, true);
-        }
+        getTransferTab().addDownload(activeBucketLabel.getText(), s3KeyEntry);
+    }
 
-        s3DownloadTab.addDownload(activeBucketLabel.getText(), s3KeyEntry);
+    public void uploadItem(File toUpload) {
+        Objects.requireNonNull(toUpload, "Unable to upload null object");
+        String path = pathBar.getText() == null ? "" : pathBar.getText();
+        getTransferTab().addUpload(activeBucketLabel.getText(), path, toUpload);
+    }
+
+    private S3TransferTab getTransferTab() {
+        S3TransferTab s3TransferTab = (S3TransferTab) getShell().getTab(S3TransferTab.class);
+        if (s3TransferTab == null) {
+            s3TransferTab = (S3TransferTab) getShell().addTab(S3TransferTab.class, S3TransferTab.TAB_TEXT, true);
+        }
+        return s3TransferTab;
     }
 
     /**

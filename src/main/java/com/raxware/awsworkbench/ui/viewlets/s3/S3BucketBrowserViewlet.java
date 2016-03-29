@@ -16,12 +16,19 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.List;
@@ -31,7 +38,7 @@ import java.util.List;
  *
  * Created by will on 3/20/2016.
  */
-public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener<String>,EventHandler<MouseEvent> {
+public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener<String>, EventHandler<Event> {
     /// The actual UI component
     private TableView<S3KeyEntry> bucketBrowserListView = new TableView<>();
 
@@ -43,6 +50,8 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
 
     /// The list of keys we are showing on the UI
     private final ObservableList<S3KeyEntry> keyList = FXCollections.observableArrayList();
+
+    private final Log log = LogFactory.getLog(S3BucketBrowserViewlet.class);
 
     public S3BucketBrowserViewlet(AwsTabView awsTabView) {
         super(awsTabView);
@@ -56,7 +65,11 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
         bucketBrowserListView.setOnMouseClicked(this);
 
         currentPrefix.addListener(this);
+        setOnDragDropped(this);
+        setOnDragOver(this);
+        setOnDragExited(this);
     }
+
 
     /**
      * Called when the bucket has changed or when the prefix (or path) has changed.  The 'directories' uses the CommonPrefixes
@@ -182,29 +195,65 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
      *
      * @param event
      */
-    @Override
-    public void handle(MouseEvent event) {
+    private void handleMouseEvent(MouseEvent event) {
         //System.out.println(event.toString());
         if(event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
-            String prefix = getCurrentPrefix();
-            if(prefix != null && isDirectorySelected()) {
-                prefix = prefix + selectedItem();
-                if(prefix.endsWith("/..")) {
-                    prefix = prefix.substring(0, prefix.length()-3); // removes the /..
-                    prefix = prefix.substring(0, prefix.lastIndexOf('/')+1); // removes the dir name
-                }
-            } else if(isFileSelected()) {
-                S3KeyEntry entry = bucketBrowserListView.getSelectionModel().getSelectedItem();
-                if (getTab() instanceof S3Downloader) {
-                    S3Downloader downloader = (S3Downloader) getTab();
-                    downloader.downloadItem(entry);
-                }
-                return;
-            } else
-                prefix = selectedItem();
-            currentPrefixProperty().set(prefix);
+            handleDoubleClick(event);
+        } else {
+            //log.info(event.toString());
+        }
+    }
+
+    public void handleDragEvent(DragEvent event) {
+        if (event.getEventType() == DragEvent.DRAG_OVER) {
+            handleDragOver(event);
+        } else if (event.getEventType() == DragEvent.DRAG_DROPPED) {
+            handleDragDropped(event);
+        }
+    }
+
+    private void handleDragDropped(DragEvent event) {
+
+        if (event.getDragboard().hasFiles()) {
+            AwsTabView tab = getTab();
+            if (!(tab instanceof S3Uploader))
+                throw new IllegalStateException("Not inside of a S3Uploader - don't know how to upload");
+            List<File> files = event.getDragboard().getFiles();
+            files.iterator().forEachRemaining(file -> {
+                log.info("Uploading " + file.getAbsolutePath());
+                ((S3Uploader) tab).uploadItem(file);
+            });
             event.consume();
         }
+    }
+
+    private void handleDragOver(DragEvent event) {
+        if (getActiveBucket() != null && getActiveBucket().length() > 0 && event.getDragboard().hasFiles()) {
+            event.acceptTransferModes(TransferMode.COPY);
+        } else {
+            event.consume();
+        }
+    }
+
+    private void handleDoubleClick(MouseEvent event) {
+        String prefix = getCurrentPrefix();
+        if (prefix != null && isDirectorySelected()) {
+            prefix = prefix + selectedItem();
+            if (prefix.endsWith("/..")) {
+                prefix = prefix.substring(0, prefix.length() - 3); // removes the /..
+                prefix = prefix.substring(0, prefix.lastIndexOf('/') + 1); // removes the dir name
+            }
+        } else if (isFileSelected()) {
+            S3KeyEntry entry = bucketBrowserListView.getSelectionModel().getSelectedItem();
+            if (getTab() instanceof S3Downloader) {
+                S3Downloader downloader = (S3Downloader) getTab();
+                downloader.downloadItem(entry);
+            }
+            return;
+        } else
+            prefix = selectedItem();
+        currentPrefixProperty().set(prefix);
+        event.consume();
     }
 
     /**
@@ -233,6 +282,15 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
     private String selectedItem() {
         S3KeyEntry selected = bucketBrowserListView.getSelectionModel().getSelectedItem();
         return selected.getDisplayName(true);
+    }
+
+    @Override
+    public void handle(Event event) {
+        if (event instanceof MouseEvent) {
+            handleMouseEvent((MouseEvent) event);
+        } else if (event instanceof DragEvent) {
+            handleDragEvent((DragEvent) event);
+        }
     }
 
     /**
