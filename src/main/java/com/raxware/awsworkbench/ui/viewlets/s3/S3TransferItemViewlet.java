@@ -5,6 +5,7 @@ import com.amazonaws.event.ProgressEventType;
 import com.amazonaws.event.ProgressListener;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.raxware.awsworkbench.ui.AwsTabView;
+import com.raxware.awsworkbench.ui.tabs.s3.S3ExplorerTab;
 import com.raxware.awsworkbench.ui.viewlets.AwsViewlet;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -17,10 +18,14 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.paint.Paint;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * Created by will on 3/27/2016.
  */
-public abstract class S3TransferItemViewlet extends AwsViewlet implements ProgressListener {
+public abstract class S3TransferItemViewlet extends AwsViewlet implements ProgressListener, TransferCompletedListener {
 
     /// The name of the item we are transferring (ie: a file name)
     private StringProperty targetName = new SimpleStringProperty();
@@ -49,6 +54,8 @@ public abstract class S3TransferItemViewlet extends AwsViewlet implements Progre
     protected long totalBytes = 0;
     protected long downloadedBytes = 0;
 
+    public List<TransferCompletedListener> transferCompletedListenerList = new LinkedList<>();
+
 
     /**
      * Creates the viewlet, but we need to know where we belong so the Viewlet is required to tell us the Tab instance
@@ -59,6 +66,33 @@ public abstract class S3TransferItemViewlet extends AwsViewlet implements Progre
     public S3TransferItemViewlet(AwsTabView awsTabView) {
         super(awsTabView);
         init();
+        addTransferCompletedListener(this);
+    }
+
+    public boolean addTransferCompletedListener(TransferCompletedListener transferCompletedListener) {
+        if (transferCompletedListener != null)
+            return transferCompletedListenerList.add(transferCompletedListener);
+        else
+            return false;
+    }
+
+    protected synchronized void fireTransferCompleted() {
+        Iterator<TransferCompletedListener> listenerIterator = transferCompletedListenerList.iterator();
+        while (listenerIterator.hasNext()) {
+            try {
+                listenerIterator.next().transferCompleted();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void transferCompleted() {
+        AwsTabView explorerTab = getTab().getShell().getTab(S3ExplorerTab.class);
+        if (explorerTab != null && explorerTab instanceof S3ExplorerTab) {
+            explorerTab.refresh();
+        }
     }
 
     protected ContextMenu buildContextMenu() {
@@ -183,14 +217,15 @@ public abstract class S3TransferItemViewlet extends AwsViewlet implements Progre
             percentageProperty().set((double) downloadedBytes / totalBytes);
             nameLabel.setTextFill(Paint.valueOf("#0000AA"));
             transferManager.shutdownNow();
+            fireTransferCompleted();
         } else {
-            System.out.println(String.format("ProgressChanged: %s [%s/%s/%s] %d",
-                    progressEvent.toString(),
-                    progressEvent.getEventType().isTransferEvent(),
-                    progressEvent.getEventType().isByteCountEvent(),
-                    progressEvent.getEventType().isRequestCycleEvent(),
-                    progressEvent.getBytesTransferred()
-            ));
+//            System.out.println(String.format("ProgressChanged: %s [%s/%s/%s] %d",
+//                    progressEvent.toString(),
+//                    progressEvent.getEventType().isTransferEvent(),
+//                    progressEvent.getEventType().isByteCountEvent(),
+//                    progressEvent.getEventType().isRequestCycleEvent(),
+//                    progressEvent.getBytesTransferred()
+//            ));
         }
     }
 

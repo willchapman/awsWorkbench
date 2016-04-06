@@ -98,4 +98,11 @@ public abstract class AwsTabView extends Tab {
     public String getMenuPath() {
         return menuPath;
     }
+
+    /**
+     * Called if the view needs to be refreshed.
+     */
+    public void refresh() {
+
+    }
 }

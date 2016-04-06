@@ -1,14 +1,23 @@
 package com.raxware.awsworkbench.ui.tabs.s3;
 
 import com.raxware.awsworkbench.model.s3.S3KeyEntry;
-import com.raxware.awsworkbench.ui.viewlets.s3.*;
+import com.raxware.awsworkbench.ui.viewlets.s3.S3BucketBrowserViewlet;
+import com.raxware.awsworkbench.ui.viewlets.s3.S3BucketListViewlet;
+import com.raxware.awsworkbench.ui.viewlets.s3.S3Downloader;
+import com.raxware.awsworkbench.ui.viewlets.s3.S3Uploader;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
-import jdk.nashorn.internal.objects.NativeJava;
 
 import java.io.File;
 import java.util.Objects;
@@ -18,7 +27,8 @@ import java.util.Objects;
  *
  * Created by will on 3/20/2016.
  */
-public class S3ExplorerTab extends S3TabView implements S3Downloader, S3Uploader {
+public class S3ExplorerTab extends S3TabView
+        implements S3Downloader, S3Uploader, EventHandler<KeyEvent>, ChangeListener<String> {
 
     /// The general layout pane
     private BorderPane explorerPane = new BorderPane();
@@ -38,6 +48,8 @@ public class S3ExplorerTab extends S3TabView implements S3Downloader, S3Uploader
     /// The viewet for the object browser
     private S3BucketBrowserViewlet bucketBrowserViewlet = new S3BucketBrowserViewlet(this);
 
+    private StringProperty currentPathProp = new SimpleStringProperty("?");
+
     public S3ExplorerTab() {
 
         BorderPane topTemp = new BorderPane();
@@ -51,13 +63,16 @@ public class S3ExplorerTab extends S3TabView implements S3Downloader, S3Uploader
 
         activeBucketLabel.textProperty().bind(bucketListViewlet.selectedBucket);
         bucketBrowserViewlet.activeBucketProperty().bind(bucketListViewlet.selectedBucket);
-        pathBar.textProperty().bindBidirectional(bucketBrowserViewlet.currentPrefixProperty());
+
+        currentPathProp.bindBidirectional(bucketBrowserViewlet.currentPrefixProperty());
+        // nice idea, but I can't type in the text field if its bound.
+        //pathBar.textProperty().bind(currentPathProp);
+        currentPathProp.addListener(this);
+        pathBar.setOnKeyReleased(this);
 
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
         scrollPane.setContent(explorerPane);
-
-
     }
 
     /**
@@ -77,12 +92,24 @@ public class S3ExplorerTab extends S3TabView implements S3Downloader, S3Uploader
         getTransferTab().addUpload(activeBucketLabel.getText(), path, toUpload);
     }
 
+    /**
+     * Convenience method to get the containing tab as a S3TransferTab and to add it if it doesn't exist.
+     *
+     * @return
+     */
     private S3TransferTab getTransferTab() {
         S3TransferTab s3TransferTab = (S3TransferTab) getShell().getTab(S3TransferTab.class);
         if (s3TransferTab == null) {
             s3TransferTab = (S3TransferTab) getShell().addTab(S3TransferTab.class, S3TransferTab.TAB_TEXT, true);
         }
         return s3TransferTab;
+    }
+
+    @Override
+    public void refresh() {
+        super.refresh();
+
+        bucketBrowserViewlet.refresh();
     }
 
     /**
@@ -101,5 +128,46 @@ public class S3ExplorerTab extends S3TabView implements S3Downloader, S3Uploader
     @Override
     protected Node getTabContent() {
         return scrollPane;
+    }
+
+    /**
+     * Looks for the enter key to know when we want to set the path manually
+     *
+     * @param event
+     */
+    @Override
+    public void handle(KeyEvent event) {
+        if (event.getCode() == KeyCode.ENTER) {
+            updateCurrentPrefix(pathBar.getText() == null ? "" : pathBar.getText());
+            event.consume();
+        }
+
+    }
+
+    /**
+     * Updates the current prefix from whatever the source, either a manual typing in the path bar
+     * or a double click in th browser window
+     *
+     * @param txt
+     */
+    private void updateCurrentPrefix(String txt) {
+        //String txt = pathBar.getText() == null ? "" : pathBar.getText();
+        if (!txt.endsWith("/") && txt.length() > 1)
+            txt += "/";
+
+        currentPathProp.set(txt);
+        pathBar.setText(txt);
+    }
+
+    /**
+     * Called when the currentPathProp is changed, so we can synchronize the pathbar.
+     *
+     * @param observable
+     * @param oldValue
+     * @param newValue
+     */
+    @Override
+    public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+        updateCurrentPrefix(newValue == null ? "" : newValue);
     }
 }

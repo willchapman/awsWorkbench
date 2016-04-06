@@ -66,4 +66,6 @@ public abstract class AwsViewlet extends BorderPane {
     protected final AmazonS3 s3() {
         return getShell().getAwsProxy().s3();
     }
+
+
 }

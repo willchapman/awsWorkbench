@@ -4,10 +4,14 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.raxware.awsworkbench.model.menu.SimpleMenuItem;
 import com.raxware.awsworkbench.model.s3.S3KeyEntry;
 import com.raxware.awsworkbench.model.s3.S3KeyTableCell;
 import com.raxware.awsworkbench.ui.AwsTabView;
+import com.raxware.awsworkbench.ui.dialogs.Dialogs;
 import com.raxware.awsworkbench.ui.dialogs.ErrorDialog;
+import com.raxware.awsworkbench.ui.menu.ContextMenuBuilder;
+import com.raxware.awsworkbench.ui.menu.ContextMenuNode;
 import com.raxware.awsworkbench.ui.viewlets.AwsViewlet;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,21 +20,18 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.event.EventType;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.input.DragEvent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.TransferMode;
+import javafx.scene.control.*;
+import javafx.scene.input.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ import java.util.List;
  *
  * Created by will on 3/20/2016.
  */
-public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener<String>, EventHandler<Event> {
+public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener<String>, EventHandler<Event>, ContextMenuNode {
     /// The actual UI component
     private TableView<S3KeyEntry> bucketBrowserListView = new TableView<>();
 
@@ -52,6 +53,10 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
     private final ObservableList<S3KeyEntry> keyList = FXCollections.observableArrayList();
 
     private final Log log = LogFactory.getLog(S3BucketBrowserViewlet.class);
+
+    private ContextMenuBuilder contextMenuBuilder = new ContextMenuBuilder(this);
+
+
 
     public S3BucketBrowserViewlet(AwsTabView awsTabView) {
         super(awsTabView);
@@ -68,6 +73,7 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
         setOnDragDropped(this);
         setOnDragOver(this);
         setOnDragExited(this);
+        setOnContextMenuRequested(this);
     }
 
 
@@ -184,7 +190,6 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
      * @param newValue
      */
     public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-        System.out.println(String.format("Updating.  Old: '%s'  New: '%s'", oldValue, newValue));
         if(newValue != null)
             syncObjectList();
     }
@@ -281,7 +286,7 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
      */
     private String selectedItem() {
         S3KeyEntry selected = bucketBrowserListView.getSelectionModel().getSelectedItem();
-        return selected.getDisplayName(true);
+        return selected != null ? selected.getDisplayName(true) : null;
     }
 
     @Override
@@ -290,7 +295,27 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
             handleMouseEvent((MouseEvent) event);
         } else if (event instanceof DragEvent) {
             handleDragEvent((DragEvent) event);
+        } else if (event instanceof ContextMenuEvent) {
+            handleContextMenu((ContextMenuEvent) event);
         }
+    }
+
+    private void handleContextMenu(ContextMenuEvent event) {
+        ContextMenu theMenu = contextMenuBuilder.buildMenu(true);
+        theMenu.show(this, event.getScreenX(), event.getScreenY());
+    }
+
+    @Override
+    public MenuItem[] getItems() {
+        List<MenuItem> menuItems = new ArrayList<MenuItem>();
+        menuItems.add(new RefreshMenuItem());
+        if (isFileSelected())
+            menuItems.add(new DeleteObjectMenuItem());
+        return menuItems.toArray(new MenuItem[menuItems.size()]);
+    }
+
+    public void refresh() {
+        syncObjectList();
     }
 
     /**
@@ -323,6 +348,40 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
             setText("Size");
             setCellValueFactory(p -> new ReadOnlyObjectWrapper<S3KeyEntry>(p.getValue()));
             setCellFactory(p -> S3KeyTableCell.makeSize());
+        }
+    }
+
+    class RefreshMenuItem extends SimpleMenuItem {
+        public RefreshMenuItem() {
+            super("Refresh");
+        }
+
+        @Override
+        protected void invoke(ActionEvent actionEvent) {
+            refresh();
+        }
+    }
+
+    class DeleteObjectMenuItem extends SimpleMenuItem {
+        public DeleteObjectMenuItem() {
+            super("Delete");
+        }
+
+        @Override
+        protected void invoke(ActionEvent actionEvent) {
+            String key = getCurrentPrefix() == null ? "" : getCurrentPrefix();
+            key += selectedItem();
+
+            if (Dialogs.confirm("Are you sure you want to delete '" + key + "' ?") == ButtonType.YES) {
+                try {
+                    System.out.println("Deleting [" + getActiveBucket() + "] " + key);
+                    s3().deleteObject(getActiveBucket(), key);
+                    syncObjectList();
+                } catch (Exception e) {
+                    ErrorDialog.show("Error in deleting " + key, e);
+                }
+
+            }
         }
     }
 }
