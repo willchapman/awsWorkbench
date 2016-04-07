@@ -8,10 +8,12 @@ import com.raxware.awsworkbench.model.menu.SimpleMenuItem;
 import com.raxware.awsworkbench.model.s3.S3KeyEntry;
 import com.raxware.awsworkbench.model.s3.S3KeyTableCell;
 import com.raxware.awsworkbench.ui.AwsTabView;
+import com.raxware.awsworkbench.ui.dialogs.DialogSettings;
 import com.raxware.awsworkbench.ui.dialogs.Dialogs;
 import com.raxware.awsworkbench.ui.dialogs.ErrorDialog;
 import com.raxware.awsworkbench.ui.menu.ContextMenuBuilder;
 import com.raxware.awsworkbench.ui.menu.ContextMenuNode;
+import com.raxware.awsworkbench.ui.tabs.s3.S3WebURLGeneratorTab;
 import com.raxware.awsworkbench.ui.viewlets.AwsViewlet;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
@@ -309,8 +311,10 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
     public MenuItem[] getItems() {
         List<MenuItem> menuItems = new ArrayList<MenuItem>();
         menuItems.add(new RefreshMenuItem());
-        if (isFileSelected())
+        if (isFileSelected()) {
             menuItems.add(new DeleteObjectMenuItem());
+            menuItems.add(new GenerateWebUrlMenuItem());
+        }
         return menuItems.toArray(new MenuItem[menuItems.size()]);
     }
 
@@ -382,6 +386,30 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
                 }
 
             }
+        }
+    }
+
+    class GenerateWebUrlMenuItem extends SimpleMenuItem {
+        public GenerateWebUrlMenuItem() {
+            super("Generate Web URL");
+        }
+
+        @Override
+        protected void invoke(ActionEvent actionEvent) {
+            S3WebURLGeneratorTab tab = (S3WebURLGeneratorTab) getShell().makeTab(S3WebURLGeneratorTab.class);
+            tab.bucketPropertyProperty().bind(activeBucket);
+            String key = getCurrentPrefix() == null ? selectedItem() :
+                    getCurrentPrefix() + selectedItem();
+
+            tab.keyPropertyProperty().set(key);
+            tab.refresh();
+
+            DialogSettings settings = new DialogSettings();
+            settings.setHeaderText("Generating Web URL for " + selectedItem());
+            settings.calculate(getShell().getBoundsInParent(), 65);
+            settings.addButton(ButtonType.OK);
+
+            Dialogs.tabDialog(tab, settings);
         }
     }
 }

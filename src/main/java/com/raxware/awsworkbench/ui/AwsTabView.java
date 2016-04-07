@@ -105,4 +105,13 @@ public abstract class AwsTabView extends Tab {
     public void refresh() {
 
     }
+
+    /**
+     * Public interface for getting the Node representation of this tab
+     *
+     * @return
+     */
+    public Node getTabGraphic() {
+        return getTabContent();
+    }
 }

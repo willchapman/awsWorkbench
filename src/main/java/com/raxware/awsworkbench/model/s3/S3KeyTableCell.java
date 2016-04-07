@@ -6,7 +6,6 @@ import javafx.scene.control.TableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.text.Font;
 
 /**
  * Formats the TableCell filled with S3KyEntry objects
@@ -33,7 +32,6 @@ public class S3KeyTableCell extends TableCell<S3KeyEntry,S3KeyEntry> {
 
     private static S3KeyTableCell build(Fields type) {
         S3KeyTableCell cell = new S3KeyTableCell();
-        cell.setFont(Font.font("Arial", 14.0));
         cell.field = type;
         return cell;
     }
@@ -82,7 +80,6 @@ public class S3KeyTableCell extends TableCell<S3KeyEntry,S3KeyEntry> {
         Image icon = item.isDirectory() ? getDirectoryIcon() : getFileIcon();
         ImageView view = new ImageView(icon);
         Label nameLabel = new Label(item.getDisplayName(true));
-        nameLabel.fontProperty().bindBidirectional(fontProperty());
         box.getChildren().addAll(view, nameLabel);
         setGraphic(box);
     }

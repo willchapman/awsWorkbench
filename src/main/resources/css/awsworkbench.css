@@ -1,0 +1,11 @@
+.root {
+    -fx-font-size: 11pt;
+    -fx-font-family: "Open Sans";
+    -fx-base: rgb(236, 240, 241);
+    -fx-background: rgb(236, 240, 241);
+}
+
+.sectionHeader {
+    -fx-font-weight: bold;
+    -fx-font-size: 115%;
+}

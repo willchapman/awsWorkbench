@@ -118,6 +118,20 @@ public class AwsWorkbenchShell extends BorderPane  {
      * @return A reference to the tab added to the UI or null
      */
     public AwsTabView addTab(Class<? extends AwsTabView> cls, String tabText, boolean autoSelect) {
+        return addTab(cls, tabText, autoSelect, true);
+    }
+
+    /**
+     * Creates a new instance, sets up the tab and adds it to the UI.  Then returns a reference to this tab.
+     * <p>
+     * If anything goes wrong, an error is shown and null is returned.
+     *
+     * @param cls        The class type to instantiate
+     * @param tabText    What text to put into the tab
+     * @param autoSelect true to automatically select the tab after being added, false to just add and not select.
+     * @return A reference to the tab added to the UI or null
+     */
+    public AwsTabView addTab(Class<? extends AwsTabView> cls, String tabText, boolean autoSelect, boolean autoAdd) {
         Objects.requireNonNull(cls, "Cannot add null tab");
         AwsTabView tab = null;
         try {
@@ -125,23 +139,27 @@ public class AwsWorkbenchShell extends BorderPane  {
             tab.setText(tabText);
             tab.awsWorkbenchShell = this;
             tab.init();
-            tab.start();
-            tabPane.getTabs().add(tab);
-            tab.added();
 
-            MenuItem menuItem = getMenuItem("Window/"+tabText);
-            menuItem.setOnAction(new TabSwitchEventHandler(this, tab));
-            tab.setMenuItem(menuItem, "Window/"+tabText);
+            if (autoAdd) {
+                tab.start();
+                tabPane.getTabs().add(tab);
+                tab.setOnCloseRequest(event -> {
+                    if (tabClosingEvent(event)) {
+                        AwsTabView tabView = (AwsTabView) event.getSource();
+                        removeTab(tabView.getClass(), tabView.getText());
+                    }
+                });
 
-            if(autoSelect)
-                setActiveTab(tab);
+                MenuItem menuItem = getMenuItem("Window/" + tabText);
+                menuItem.setOnAction(new TabSwitchEventHandler(this, tab));
+                tab.setMenuItem(menuItem, "Window/" + tabText);
 
-            tab.setOnCloseRequest(event -> {
-                if(tabClosingEvent(event)) {
-                    AwsTabView tabView = (AwsTabView) event.getSource();
-                    removeTab(tabView.getClass(), tabView.getText());
-                }
-            });
+                if (autoSelect)
+                    setActiveTab(tab);
+
+                tab.added();
+            }
+
 
             log.trace(String.format("Tab Added -> %s :: %s", tabText, cls.toString()));
             return tab;
@@ -154,6 +172,16 @@ public class AwsWorkbenchShell extends BorderPane  {
 
             return null;
         }
+    }
+
+    /**
+     * Generates a tab object, but does not add it to the UI
+     *
+     * @param cls
+     * @return
+     */
+    public AwsTabView makeTab(Class<? extends AwsTabView> cls) {
+        return addTab(cls, "", false, false);
     }
 
     /**

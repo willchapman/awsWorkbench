@@ -18,6 +18,7 @@ package com.raxware.awsworkbench;
 
 import com.raxware.awsworkbench.ui.AwsWorkbenchFxApplication;
 import javafx.application.Application;
+import javafx.scene.text.Font;
 
 
 /**
@@ -28,6 +29,9 @@ import javafx.application.Application;
 public class Startup {
     public static void main(String[] args) {
         //PropertyConfigurator.configure("log4j.properties");
+        Font.getFamilies().iterator().forEachRemaining(s -> System.out.println(s));
         Application.launch(AwsWorkbenchFxApplication.class, args);
+
+
     }
 }

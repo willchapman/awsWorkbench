@@ -16,9 +16,12 @@
 
 package com.raxware.awsworkbench.ui;
 
+import com.raxware.awsworkbench.res.Resources;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,7 +60,12 @@ public class AwsWorkbenchFxApplication extends Application {
         awsWorkbenchShell.setApplication(this);
 
         Scene primaryScene = new Scene(awsWorkbenchShell);
+        primaryStage.setTitle("awsWorkbench");
+
+        primaryScene.getStylesheets().add("css/awsworkbench.css");
+        primaryStage.getIcons().add(Resources.getPngIcon("wrench", "128"));
         primaryStage.setScene(primaryScene);
+        setWindowBounds(primaryStage);
         primaryStage.show();
         Platform.runLater(() -> awsWorkbenchShell.applicationStartup());
 
@@ -108,6 +116,44 @@ public class AwsWorkbenchFxApplication extends Application {
 
         log.warn("No homeDirectory found");
         return null;
+    }
+
+    /**
+     * Convenience for getWindowBounds(stage, 65)
+     *
+     * @return
+     */
+    private void setWindowBounds(Stage stage) {
+        setWindowBounds(stage, 65);
+    }
+
+
+    /**
+     * Determine the default window position, but either restoring the last saved configuration (not yet implemented0
+     * or by centering on the screen and taking up the requested percentage of the screen (1 to 100).
+     * <p>
+     * Defaults to 65
+     *
+     * @return
+     */
+    private void setWindowBounds(Stage stage, int percentage) {
+        percentage = Utils.boundsCheck(1, 100, percentage);
+        Rectangle2D screen = Screen.getPrimary().getVisualBounds();
+        double percentVal = percentage / 100.0;
+
+        double width = screen.getWidth() * percentVal;
+        double x = (screen.getWidth() - width) / 2.0;
+
+        double height = screen.getHeight() * percentVal;
+        double y = (screen.getHeight() - height) / 2.0;
+
+        stage.setX(x);
+        stage.setY(y);
+        stage.setWidth(width);
+        stage.setHeight(height);
+
+        //
+        // perhaps we should save these settings?
     }
 
 }
