@@ -19,3 +19,6 @@ You use this at your own risk.
 We are using the default provider chain for with 1 additional modification.
 We are looking for a "s3workbench" profile first, then fallback to the
 default provider chain.
+
+### Attribution
+Wrench Icon: https://www.iconfinder.com/icons/416405/service_setting_tool_tools_work_wrench_icon#size=128

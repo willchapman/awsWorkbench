@@ -4,7 +4,6 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -129,13 +128,13 @@ public class MenuBarRegistry {
      */
     private MenuItem getMenuItem(String[] strings, boolean autoAdd) {
         MenuItem menu = null;
-        System.out.println("getMenuItem("+ Arrays.toString(strings)+")");
+
         for(int i = 0; i < strings.length; i++) {
             MenuItem parent = menu;
             menu = get(parent, strings[i]);
             if(menu == null && autoAdd) {
-                if(strings.length-1 == i) {
-                    System.out.println("Adding MeuItem: "+strings[i]);
+                if (strings.length > 1 && strings.length - 1 == i) {
+                    System.out.println("Adding MenuItem: " + strings[i]);
                     menu = new MenuItem(strings[i]);
                 } else {
                     System.out.println("Adding Menu: "+strings[i]);

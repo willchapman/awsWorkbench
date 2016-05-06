@@ -30,6 +30,10 @@ public class S3KeyTableCell extends TableCell<S3KeyEntry,S3KeyEntry> {
         return build(Fields.SIZE);
     }
 
+    public static S3KeyTableCell makeStorageClass() {
+        return build(Fields.STORAGE_CLASS);
+    }
+
     private static S3KeyTableCell build(Fields type) {
         S3KeyTableCell cell = new S3KeyTableCell();
         cell.field = type;
@@ -57,10 +61,17 @@ public class S3KeyTableCell extends TableCell<S3KeyEntry,S3KeyEntry> {
             case SIZE:
                 updateSize(item);
                 break;
+            case STORAGE_CLASS:
+                updateStorageClass(item);
+                break;
             default:
                 System.out.println("Unknown field");
                 return;
         }
+    }
+
+    private void updateStorageClass(S3KeyEntry item) {
+        setText(item.getStorageClass());
     }
 
     private void updateSize(S3KeyEntry item) {
@@ -92,7 +103,8 @@ public class S3KeyTableCell extends TableCell<S3KeyEntry,S3KeyEntry> {
         return Resources.getPngIcon("file", "20");
     }
 
+
     public enum Fields {
-        NAME, LAST_MODIFIED, SIZE
+        NAME, LAST_MODIFIED, SIZE, STORAGE_CLASS
     }
 }

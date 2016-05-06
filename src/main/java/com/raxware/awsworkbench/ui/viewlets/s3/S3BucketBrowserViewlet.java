@@ -1,9 +1,7 @@
 package com.raxware.awsworkbench.ui.viewlets.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 import com.raxware.awsworkbench.model.menu.SimpleMenuItem;
 import com.raxware.awsworkbench.model.s3.S3KeyEntry;
 import com.raxware.awsworkbench.model.s3.S3KeyTableCell;
@@ -34,6 +32,7 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -177,7 +176,8 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
         bucketBrowserListView.getColumns().addAll(
                 new NameColumn(),
                 new FileSizeColumn(),
-                new LastModifiedColumn()
+                new LastModifiedColumn(),
+                new StorageClassColumn()
         );
     }
 
@@ -314,6 +314,7 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
         if (isFileSelected()) {
             menuItems.add(new DeleteObjectMenuItem());
             menuItems.add(new GenerateWebUrlMenuItem());
+            menuItems.add(new ChangeStorageClassMenuItem());
         }
         return menuItems.toArray(new MenuItem[menuItems.size()]);
     }
@@ -354,6 +355,18 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
             setCellFactory(p -> S3KeyTableCell.makeSize());
         }
     }
+
+    /**
+     * Shows the storage column and how the object is stored in S3
+     */
+    class StorageClassColumn extends TableColumn<S3KeyEntry, S3KeyEntry> {
+        public StorageClassColumn() {
+            setText("Storage Class");
+            setCellValueFactory(p -> new ReadOnlyObjectWrapper<S3KeyEntry>(p.getValue()));
+            setCellFactory(p -> S3KeyTableCell.makeStorageClass());
+        }
+    }
+
 
     class RefreshMenuItem extends SimpleMenuItem {
         public RefreshMenuItem() {
@@ -410,6 +423,29 @@ public class S3BucketBrowserViewlet extends AwsViewlet implements ChangeListener
             settings.addButton(ButtonType.OK);
 
             Dialogs.tabDialog(tab, settings);
+        }
+    }
+
+    class ChangeStorageClassMenuItem extends SimpleMenuItem {
+        public ChangeStorageClassMenuItem() {
+            super("Change Storage Class...");
+        }
+
+        @Override
+        protected void invoke(ActionEvent actionEvent) {
+            Object newClass = Dialogs.choiceDialog(Arrays.asList(StorageClass.values()), "What storage class?", null);
+            if (newClass == null) {
+                actionEvent.consume();
+                return;
+            }
+
+            String key = getCurrentPrefix() == null ? selectedItem() : getCurrentPrefix() + selectedItem();
+
+            CopyObjectRequest copyObjectRequest = new CopyObjectRequest(getActiveBucket(), key, getActiveBucket(), key);
+            copyObjectRequest.setStorageClass(newClass.toString());
+            s3().copyObject(copyObjectRequest);
+            actionEvent.consume();
+            syncObjectList();
         }
     }
 }

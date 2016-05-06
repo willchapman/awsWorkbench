@@ -1,6 +1,7 @@
 package com.raxware.awsworkbench.ui;
 
 import com.raxware.awsworkbench.AwsProxy;
+import com.raxware.awsworkbench.model.menu.ExitMenuItem;
 import com.raxware.awsworkbench.ui.dialogs.Dialogs;
 import com.raxware.awsworkbench.ui.dialogs.ErrorDialog;
 import com.raxware.awsworkbench.ui.menu.MenuBarRegistry;
@@ -38,7 +39,17 @@ public class AwsWorkbenchShell extends BorderPane  {
         tabPane.setPrefWidth(1000);
 
         setTop(MenuBarRegistry.getInstance().getMenuBar());
+        buildDefaultMenu();
         setCenter(tabPane);
+    }
+
+    /**
+     * Creates some simple menu items in the main menubar that will be consistent throughout the application.
+     */
+    private void buildDefaultMenu() {
+        Menu file = (Menu) MenuBarRegistry.getInstance().getMenuItem("File", true);
+
+        file.getItems().addAll(new SeparatorMenuItem(), new ExitMenuItem());
     }
 
     /**

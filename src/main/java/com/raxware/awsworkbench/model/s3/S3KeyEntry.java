@@ -66,6 +66,7 @@ public class S3KeyEntry {
         entry.path = summary.getKey();
         entry.displayName = entry.path.substring(entry.path.lastIndexOf('/')+1);
         entry.type = TYPE_FILE;
+        entry.storageClass = summary.getStorageClass();
         entry.lastModified = summary.getLastModified().getTime();
         entry.size = summary.getSize();
         

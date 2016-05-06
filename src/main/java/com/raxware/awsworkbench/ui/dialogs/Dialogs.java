@@ -1,9 +1,11 @@
 package com.raxware.awsworkbench.ui.dialogs;
 
 import com.raxware.awsworkbench.ui.AwsTabView;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+
+import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Convience methods for getting feedback from the user
@@ -21,6 +23,45 @@ public class Dialogs {
         Alert dialog = new Alert(Alert.AlertType.WARNING, msg, ButtonType.YES, ButtonType.NO);
         ButtonType buttonType = dialog.showAndWait().orElse(null);
         return buttonType;
+    }
+
+    public static Object choiceDialog(Collection objs, String prompt, DialogSettings settings) {
+        HBox box = new HBox();
+        box.getChildren().add(new Label(prompt));
+
+        ComboBox<String> list = new ComboBox<>();
+        list.getItems().addAll(objs);
+        box.getChildren().add(list);
+
+
+        Dialog dialog = new Dialog();
+        dialog.getDialogPane().getStylesheets().add("css/awsworkbench.css");
+
+        dialog.getDialogPane().setContent(box);
+
+        if (settings == null) {
+            settings = new DialogSettings();
+            settings.setHeaderText("Make your selection...");
+            settings.addButton(ButtonType.OK);
+            settings.addButton(ButtonType.CANCEL);
+        }
+
+        dialog.setHeaderText(settings.getHeaderText());
+        dialog.getDialogPane().getButtonTypes().addAll(settings.getButtonTypes());
+
+        dialog.setX(settings.getX());
+        dialog.setY(settings.getY());
+        dialog.setWidth(settings.getWidth());
+        dialog.setHeight(settings.getHeight());
+
+        Optional optional = dialog.showAndWait();
+        ButtonType buttonChoice = (ButtonType) optional.orElse(null);
+        if (buttonChoice == ButtonType.OK) {
+            return list.getValue();
+        } else {
+            return null;
+        }
+
     }
 
     public static void tabDialog(AwsTabView awsTabView, DialogSettings settings) {
@@ -45,8 +86,6 @@ public class Dialogs {
 
 
         dialog.showAndWait();
-
-
     }
 
 

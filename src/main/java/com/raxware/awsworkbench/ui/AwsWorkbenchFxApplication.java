@@ -38,12 +38,18 @@ public class AwsWorkbenchFxApplication extends Application {
 
     private File homeDirectory = null;
     private static Log log  = LogFactory.getLog(AwsWorkbenchFxApplication.class);
+    private static AwsWorkbenchFxApplication awsWorkbenchFxApplication;
 
     /**
      * Constructor - establishes home directory
      */
     public AwsWorkbenchFxApplication() {
+        awsWorkbenchFxApplication = this;
         homeDirectory = getHome();
+    }
+
+    public static AwsWorkbenchFxApplication getThisApplication() {
+        return awsWorkbenchFxApplication;
     }
 
 
